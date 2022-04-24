@@ -11,6 +11,8 @@ import {
   RightSide,
   WrapperFlex,
   RowBetween,
+  Step,
+  StepIndicator,
 } from "./StyledMainOrder";
 import Image from "next/image";
 import Button from "../Elements/Button";
@@ -21,6 +23,8 @@ import H3 from "../Elements/Typography/H3";
 import Checkbox from "../Elements/Checkbox";
 import TextInput from "../Elements/TextInput";
 import TextArea from "../Elements/TextArea";
+import { currencyFormat } from "../../../utils/currencyNumber";
+import { makeid } from "../../../utils/randomId";
 
 function MainOrder() {
   const {
@@ -30,27 +34,58 @@ function MainOrder() {
     setValue,
     formState: { errors },
   } = useForm({
+    mode: "onChange",
     defaultValues: {
       email: "",
       dropshipperName: "",
       phone: "",
       dropshipperPhone: "",
       address: "",
-      shipment: null,
+      shipment: "",
     },
   });
 
+  const formValues = watch();
+  useEffect(() => {
+    if (errors) {
+      if (formStep === 1) {
+        if (
+          formValues["address"] === "" ||
+          formValues["email"] === "" ||
+          formValues["phone"] === ""
+        ) {
+          setDisabled(true);
+        } else {
+          if (Object.keys(errors).length) {
+            setDisabled(true);
+          } else {
+            setDisabled(false);
+          }
+        }
+      }
+
+      if (formStep === 2) {
+        if (formValues["shipment"] === "") {
+          setDisabled(true);
+        } else {
+          if (Object.keys(errors).length) {
+            setDisabled(true);
+          } else {
+            setDisabled(false);
+          }
+        }
+      }
+    } else {
+      setDisabled(false);
+    }
+  }, [errors, formStep, formValues]);
+
+  const [disabled, setDisabled] = useState(true);
   const [dropship, setDropship] = useState(false);
   const [costGoods] = useState(500000);
   const [dropshipFee, setDropshipFee] = useState(0);
-  const [selectedShipment, setSelectedShipment] = useState({
-    title: "",
-    value: "",
-  });
-  const [selectedPayment, setSelectedPayment] = useState({
-    title: "",
-    value: "",
-  });
+  const [selectedShipment, setSelectedShipment] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState(null);
   const [shipment] = useState([
     {
       id: 1,
@@ -82,21 +117,46 @@ function MainOrder() {
       value: "",
     },
   ]);
+  const [steps, setSteps] = useState([
+    {
+      id: 1,
+      title: "Delivery",
+      active: true,
+    },
+    {
+      id: 2,
+      title: "Payment",
+      active: false,
+    },
+    {
+      id: 3,
+      title: "Finish",
+      active: false,
+    },
+  ]);
   const [formStep, setFormStep] = useState(1);
 
   const completeFormStep = () => {
-    setFormStep((cur) => cur + 1);
+    if (!disabled) {
+      setFormStep(formStep + 1);
+      const id = formStep + 1;
+      const filter = steps.findIndex((el) => el.id === id);
+      steps[filter].active = true;
+      setSteps(steps);
+    }
   };
 
   const handleDropship = (status) => {
     setDropship(status);
     setDropshipFee(status ? 5900 : 0);
-    setValue("dropshipperName", "");
-    setValue("dropshipperPhone", "");
+    if (!status) {
+      setValue("dropshipperName", "");
+      setValue("dropshipperPhone", "");
+    }
   };
 
-  const handleShipment = (value) => {
-    setSelectedShipment(value);
+  const handleShipment = (value, id) => {
+    setSelectedShipment({ ...value, id });
     setValue("shipment", value);
   };
 
@@ -111,7 +171,20 @@ function MainOrder() {
 
   return (
     <StyledMainOrder>
-      <ContainerSteps> This is steps</ContainerSteps>
+      <ContainerSteps>
+        {steps.map((step) => {
+          return (
+            <Step key={step.id}>
+              <StepIndicator active={step.active}>
+                <span>{step.id}</span>
+              </StepIndicator>
+              <Paragraph style={{ marginLeft: 10, color: "#FF8A00" }}>
+                {step.title}
+              </Paragraph>
+            </Step>
+          );
+        })}
+      </ContainerSteps>
       {formStep !== 3 && (
         <Back as="a" href="#" title="Back to cart">
           <BoxIcon>
@@ -198,7 +271,7 @@ function MainOrder() {
                     name="dropshipperName"
                     value={watch("dropshipperName")}
                     errors={errors.dropshipperName}
-                    disabled={dropship}
+                    disabled={!dropship}
                   />
                   <TextInput
                     register={register}
@@ -209,7 +282,7 @@ function MainOrder() {
                     maxLength={20}
                     value={watch("dropshipperPhone")}
                     errors={errors.dropshipperPhone}
-                    disabled={dropship}
+                    disabled={!dropship}
                   />
                 </div>
               </RowBetween>
@@ -231,15 +304,15 @@ function MainOrder() {
                   gap: 10,
                 }}
               >
-                {shipment.map((el, i) => {
+                {shipment.map((el) => {
                   return (
                     <Button
                       type="choose-button"
-                      onClick={(value) => handleShipment(value)}
+                      onClick={(value) => handleShipment(value, el.id)}
                       chooseTitle={el.title}
                       chooseValue={el.value}
-                      defaultValue={selectedShipment.value}
-                      key={i}
+                      defaultValue={selectedShipment?.value}
+                      key={el.id}
                     />
                   );
                 })}
@@ -264,7 +337,7 @@ function MainOrder() {
                       onClick={(value) => handlePayment(value)}
                       chooseTitle={el.title}
                       chooseValue={el.value}
-                      defaultValue={selectedPayment.value}
+                      defaultValue={selectedPayment?.value}
                       key={i}
                     />
                   );
@@ -292,10 +365,18 @@ function MainOrder() {
                     <Divider />
                   </H2>
                   <Paragraph style={{ marginBottom: 10 }}>
-                    Order ID : XXKYB
+                    Order ID : {makeid()}
                   </Paragraph>
                   <Paragraph style={{ marginBottom: 60, opacity: "0.6" }}>
-                    Your order will be delivered today with GO-SEND
+                    Your order will be delivered{" "}
+                    {`${
+                      selectedShipment.id === 1
+                        ? "today"
+                        : selectedShipment.id === 2
+                        ? "2 days"
+                        : "1 days"
+                    }`}{" "}
+                    with {selectedShipment?.title}
                   </Paragraph>
                   <Back as="a" href="#" title="Back to cart">
                     <BoxIcon>
@@ -318,43 +399,67 @@ function MainOrder() {
           <div style={{ marginBottom: 88 }}>
             <H3>Summary</H3>
             <Paragraph weight="400">10 items purchased</Paragraph>
-            <hr />
-            <Paragraph weight="400">Delivery estimation</Paragraph>
-            <Paragraph weight="400" color="green">
-              {`${selectedShipment?.id === 1 ? "today" : "2-3 days"} by ${
-                selectedShipment?.title
-              }`}
-            </Paragraph>
-            <hr />
-            <Paragraph weight="400">Payment method</Paragraph>
-            <Paragraph weight="400" color="green">
-              {selectedPayment?.title}
-            </Paragraph>
+            {selectedShipment && (
+              <>
+                <hr />
+                <Paragraph weight="400">Delivery estimation</Paragraph>
+                <Paragraph weight="400" color="green">
+                  {`${
+                    selectedShipment.id === 1
+                      ? "today"
+                      : selectedShipment.id === 2
+                      ? "2 days"
+                      : "1 days"
+                  } by ${selectedShipment.title}`}
+                </Paragraph>
+              </>
+            )}
+            {selectedPayment && (
+              <>
+                <hr />
+                <Paragraph weight="400">Payment method</Paragraph>
+                <Paragraph weight="400" color="green">
+                  {selectedPayment?.title}
+                </Paragraph>
+              </>
+            )}
           </div>
           <div>
             <RowBetween margin="0px 0px 12px">
               <Paragraph weight="400">Cost of goods</Paragraph>
-              <Paragraph weight="700">{costGoods}</Paragraph>
+              <Paragraph weight="700">{currencyFormat(costGoods)}</Paragraph>
             </RowBetween>
             <RowBetween margin="0px 0px 24px">
               <Paragraph weight="400">Dropshipping Fee</Paragraph>
-              <Paragraph weight="700">{dropshipFee}</Paragraph>
+              <Paragraph weight="700">{currencyFormat(dropshipFee)}</Paragraph>
             </RowBetween>
-            <RowBetween margin="0px 0px 24px">
-              <Paragraph weight="400">
-                {selectedShipment?.title} shipment
-              </Paragraph>
-              <Paragraph weight="700">{selectedShipment?.value}</Paragraph>
-            </RowBetween>
+            {selectedShipment && (
+              <RowBetween margin="0px 0px 24px">
+                <Paragraph weight="400">
+                  {selectedShipment?.title} shipment
+                </Paragraph>
+                <Paragraph weight="700">
+                  {currencyFormat(selectedShipment?.value)}
+                </Paragraph>
+              </RowBetween>
+            )}
             <RowBetween margin="0px 0px 30px">
               <H3>Total</H3>
-              <H3>{costGoods + dropshipFee + selectedShipment?.value}</H3>
+              <H3>
+                {currencyFormat(
+                  costGoods + dropshipFee + (selectedShipment?.value || 0)
+                )}
+              </H3>
             </RowBetween>
             {formStep !== 3 && (
-              <Button type="button" onClick={completeFormStep}>
+              <Button
+                type="button"
+                disabled={disabled}
+                onClick={completeFormStep}
+              >
                 {formStep === 1
                   ? "Continue to Payment"
-                  : `Pay with ${selectedPayment.title}`}
+                  : `Pay with ${selectedPayment?.title || ""}`}
               </Button>
             )}
           </div>

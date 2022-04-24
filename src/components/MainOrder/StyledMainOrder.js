@@ -1,8 +1,10 @@
 import styled from "styled-components";
 
 export const StyledMainOrder = styled.div`
-  &:hover: {
-    background-color: red;
+  @media screen and (max-width: 1280px) {
+    min-height: unset;
+    height: auto;
+    padding: 32px 16px;
   }
   background-color: #fff;
   border-radius: 4px;
@@ -24,6 +26,7 @@ export const ContainerSteps = styled.div`
   display: flex;
   align-items: center;
   padding: 20px 38px;
+  justify-content: space-around;
 `;
 
 export const Back = styled.button`
@@ -56,16 +59,48 @@ export const RightSide = styled.div`
 `;
 
 export const WrapperFlex = styled.form`
+  @media screen and (max-width: 1280px) {
+    flex-direction: column;
+  }
   display: flex;
   height: 100%;
 `;
 
 export const RowBetween = styled.div`
+  @media screen and (max-width: 1280px) {
+    flex-direction: column;
+    gap: 0;
+    justify-content: center;
+    padding: 0;
+  }
   align-items: center;
   display: flex;
-  flex: 1;
   gap: 5%;
   justify-content: space-between;
   padding-right: 30px;
   margin: ${(props) => (props.margin ? props.margin : "10px 0")};
+`;
+
+export const Step = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const StepIndicator = styled.div`
+  height: 30px;
+  width: 30px;
+  border-radius: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  ${(props) => {
+    if (props.active) {
+      return `
+      color: white;
+      background-color: rgba(255, 138, 0, 1);`;
+    }
+    return `
+    background-color: rgba(255, 138, 0, 0.1);
+    color: #FF8A00;`;
+  }}
 `;

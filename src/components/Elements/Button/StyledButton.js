@@ -13,6 +13,11 @@ export const StyledButton = styled.button`
   &:hover {
     background-color: #ed7e00;
   }
+  &:disabled,
+  button[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 export const ChooseButton = styled.button`

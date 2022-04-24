@@ -8,13 +8,18 @@ function H2(props) {
 }
 
 H2.defaultProps = {
+  children: "",
   color: "#ff8a00",
   margin: "24px",
   weight: "700",
 };
 
 H2.propTypes = {
-  color: PropTypes.string,
+  children: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.number,
+    PropTypes.any,
+  ]),
   margin: PropTypes.string,
   weight: PropTypes.string,
 };

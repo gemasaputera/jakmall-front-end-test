@@ -18,7 +18,7 @@ H3.defaultProps = {
 };
 
 H3.propTypes = {
-  children: PropTypes.string,
+  children: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   color: PropTypes.string,
   margin: PropTypes.string,
   weight: PropTypes.string,

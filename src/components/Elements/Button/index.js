@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { StyledButton, ChooseButton } from "./StyledButton";
 import Paragraph from "../Typography/Paragraph";
+import { currencyFormat } from "../../../../utils/currencyNumber";
 
 function Button(props) {
   const { type, children, defaultValue, chooseTitle, chooseValue } = props;
@@ -15,15 +16,15 @@ function Button(props) {
       props.onClick({ title: chooseTitle, value: chooseValue });
     };
 
-    console.log("defaultValue", defaultValue);
-
     return (
       <ChooseButton onClick={handleClick} active={selected === chooseValue}>
         <Paragraph style={{ fontWeight: "400", fontSize: 13 }}>
           {chooseTitle}
         </Paragraph>
         <Paragraph style={{ fontWeight: "700", fontSize: 16 }}>
-          {chooseValue}
+          {typeof chooseValue === "number"
+            ? currencyFormat(chooseValue)
+            : chooseValue}
         </Paragraph>
       </ChooseButton>
     );
